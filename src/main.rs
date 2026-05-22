@@ -10,7 +10,7 @@ use task::TaskStore;
 use app::{App, ActiveTab};
 use tui::Tui;
 use std::time::Duration;
-use crossterm::event::{KeyCode, KeyModifiers};
+use crossterm::event::{KeyCode, KeyModifiers, KeyEventKind};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Parse command-line arguments using clap
@@ -74,77 +74,81 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Poll keyboard events with a 100ms timeout
             if let Some(key) = tui.poll_event(Duration::from_millis(100))? {
-                // If keyboard text modal is visible, route text characters
-                if app.show_add_popup {
-                    match key.code {
-                        KeyCode::Enter => {
-                            app.add_task_from_input();
-                        }
-                        KeyCode::Esc => {
-                            app.show_add_popup = false;
-                            app.input_text.clear();
-                        }
-                        KeyCode::Backspace => {
-                            app.input_text.pop();
-                        }
-                        KeyCode::Char(c) => {
-                            // Only append if it's not a control code
-                            app.input_text.push(c);
-                        }
-                        _ => {}
-                    }
-                } else {
-                    // Else, standard normal hotkey navigation
-                    match key.code {
-                        // Quit bindings
-                        KeyCode::Char('q') | KeyCode::Esc => {
-                            app.quit();
-                        }
-                        // Handle Ctrl+C manually to guarantee clean terminal exit!
-                        KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            app.quit();
-                        }
-                        // Tab Switching
-                        KeyCode::Tab => {
-                            app.next_tab();
-                        }
-                        KeyCode::Char('1') => {
-                            app.active_tab = ActiveTab::Dashboard;
-                        }
-                        KeyCode::Char('2') => {
-                            app.active_tab = ActiveTab::Tasks;
-                        }
-                        KeyCode::Char('3') => {
-                            app.active_tab = ActiveTab::SystemInfo;
-                        }
-                        // Navigation in Lists
-                        KeyCode::Down | KeyCode::Char('j') => {
-                            if app.active_tab == ActiveTab::Tasks {
-                                app.list_next();
+                // On Windows, Crossterm registers both key presses and key releases.
+                // We ONLY want to handle standard Press events to prevent double-triggers!
+                if key.kind == KeyEventKind::Press {
+                    // If keyboard text modal is visible, route text characters
+                    if app.show_add_popup {
+                        match key.code {
+                            KeyCode::Enter => {
+                                app.add_task_from_input();
                             }
-                        }
-                        KeyCode::Up | KeyCode::Char('k') => {
-                            if app.active_tab == ActiveTab::Tasks {
-                                app.list_prev();
+                            KeyCode::Esc => {
+                                app.show_add_popup = false;
+                                app.input_text.clear();
                             }
-                        }
-                        // Task Actions (Only works on the Task List Tab)
-                        KeyCode::Char(' ') => {
-                            if app.active_tab == ActiveTab::Tasks {
-                                app.toggle_selected_task();
+                            KeyCode::Backspace => {
+                                app.input_text.pop();
                             }
-                        }
-                        KeyCode::Delete | KeyCode::Char('d') => {
-                            if app.active_tab == ActiveTab::Tasks {
-                                app.delete_selected_task();
+                            KeyCode::Char(c) => {
+                                // Only append if it's not a control code
+                                app.input_text.push(c);
                             }
+                            _ => {}
                         }
-                        KeyCode::Char('a') => {
-                            if app.active_tab == ActiveTab::Tasks {
-                                app.show_add_popup = true;
+                    } else {
+                        // Else, standard normal hotkey navigation
+                        match key.code {
+                            // Quit bindings
+                            KeyCode::Char('q') | KeyCode::Esc => {
+                                app.quit();
                             }
+                            // Handle Ctrl+C manually to guarantee clean terminal exit!
+                            KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                                app.quit();
+                            }
+                            // Tab Switching
+                            KeyCode::Tab => {
+                                app.next_tab();
+                            }
+                            KeyCode::Char('1') => {
+                                app.active_tab = ActiveTab::Dashboard;
+                            }
+                            KeyCode::Char('2') => {
+                                app.active_tab = ActiveTab::Tasks;
+                            }
+                            KeyCode::Char('3') => {
+                                app.active_tab = ActiveTab::SystemInfo;
+                            }
+                            // Navigation in Lists
+                            KeyCode::Down | KeyCode::Char('j') => {
+                                if app.active_tab == ActiveTab::Tasks {
+                                    app.list_next();
+                                }
+                            }
+                            KeyCode::Up | KeyCode::Char('k') => {
+                                if app.active_tab == ActiveTab::Tasks {
+                                    app.list_prev();
+                                }
+                            }
+                            // Task Actions (Only works on the Task List Tab)
+                            KeyCode::Char(' ') => {
+                                if app.active_tab == ActiveTab::Tasks {
+                                    app.toggle_selected_task();
+                                }
+                            }
+                            KeyCode::Delete | KeyCode::Char('d') => {
+                                if app.active_tab == ActiveTab::Tasks {
+                                    app.delete_selected_task();
+                                }
+                            }
+                            KeyCode::Char('a') => {
+                                if app.active_tab == ActiveTab::Tasks {
+                                    app.show_add_popup = true;
+                                }
+                            }
+                            _ => {}
                         }
-                        _ => {}
                     }
                 }
             }

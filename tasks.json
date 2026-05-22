@@ -2,13 +2,19 @@
   {
     "id": 1,
     "title": "Implement TUI Setup",
-    "completed": false,
+    "completed": true,
     "created_at": "2026-05-22 11:31:35"
   },
   {
-    "id": 2,
-    "title": "ttaallkk  ttoo  aa  ssttrraannggeerr",
+    "id": 3,
+    "title": "talk to a girl online",
     "completed": false,
-    "created_at": "2026-05-22 11:49:38"
+    "created_at": "2026-05-22 11:52:08"
+  },
+  {
+    "id": 4,
+    "title": "complete a basic codign agent with tui",
+    "completed": true,
+    "created_at": "2026-05-22 11:54:56"
   }
 ]
